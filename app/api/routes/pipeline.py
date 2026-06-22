@@ -249,8 +249,13 @@ def _task_to_timeline_run(task: PipelineTask) -> PipelineTimelineRunResponse:
     state = _state_from_payload(payload)
     metadata = _metadata_from_state(payload, state)
     started_at = _coerce_iso(payload.get("started_at"), task.created_at)
-    ended_at = _coerce_iso(payload.get("ended_at"), task.updated_at) if _is_terminal(task.status) else None
-    status = _timeline_status(task.status, bool(task.error or state.get("error")))
+    effective_status = _effective_task_status(task.status, payload, state, task.error)
+    ended_at = (
+        _coerce_iso(payload.get("ended_at"), task.updated_at)
+        if _is_terminal(effective_status)
+        else None
+    )
+    status = _timeline_status(effective_status, bool(task.error or state.get("error")))
     article_route = None
     content_id = metadata.get("content_id")
     if content_id:
@@ -268,6 +273,26 @@ def _task_to_timeline_run(task: PipelineTask) -> PipelineTimelineRunResponse:
         articleRoute=article_route,
         errorMessage=task.error or _string_or_none(state.get("error")),
     )
+
+
+def _effective_task_status(
+    persisted_status: str,
+    payload: dict[str, Any],
+    state: dict[str, Any],
+    error: str | None,
+) -> str:
+    """Infer completion for runs whose final telemetry update was interrupted."""
+
+    if error or state.get("error"):
+        return "failure"
+    step_history = {
+        str(step)
+        for step in state.get("step_history") or payload.get("step_history") or []
+    }
+    completed_agents = {agent_key for agent_key, _, _ in AGENT_DEFINITIONS}
+    if payload.get("current_step") == "completed" or completed_agents.issubset(step_history):
+        return "success"
+    return persisted_status
 
 
 def _content_to_timeline_run(content: Content) -> PipelineTimelineRunResponse:

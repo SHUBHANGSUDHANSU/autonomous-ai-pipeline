@@ -140,7 +140,11 @@ async def run_pipeline(
     initial_state = create_initial_state(topic)
     logger.info("pipeline_started", topic=topic)
     await _emit_progress(progress_callback, initial_state, "started")
-    pipeline = build_pipeline(progress_callback=progress_callback)
+    pipeline = (
+        build_pipeline()
+        if progress_callback is None
+        else build_pipeline(progress_callback=progress_callback)
+    )
     result: PipelineState = await pipeline.ainvoke(initial_state)
     await _emit_progress(progress_callback, result, "completed")
     logger.info(

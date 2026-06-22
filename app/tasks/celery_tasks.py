@@ -49,38 +49,56 @@ def run_pipeline_task(topic: str) -> dict[str, Any]:
     from app.agents import orchestrator
 
     task_id = _current_task_id()
-    logger.info("run_pipeline_task_started", topic=topic)
-    asyncio.run(
-        _record_pipeline_task(
+
+    async def _run() -> dict[str, Any]:
+        logger.info("run_pipeline_task_started", topic=topic)
+        await _record_pipeline_task(
             task_id,
             topic,
             "running",
             payload={"started_at": datetime.now(UTC).isoformat(), "current_step": "started"},
         )
-    )
-    progress_callback = _build_progress_callback(task_id, topic)
-    run_pipeline = orchestrator.run_pipeline
-    if "progress_callback" in inspect.signature(run_pipeline).parameters:
-        result = asyncio.run(run_pipeline(topic, progress_callback=progress_callback))
-    else:
-        result = asyncio.run(run_pipeline(topic))
-    final_status = "failure" if result.get("error") else "success"
-    asyncio.run(
-        _record_pipeline_task(
-            task_id,
-            topic,
-            final_status,
-            payload={"result": dict(result), "ended_at": datetime.now(UTC).isoformat()},
-            error=str(result.get("error")) if result.get("error") else None,
-        )
-    )
-    logger.info(
-        "run_pipeline_task_completed",
-        topic=topic,
-        publish_status=result.get("publish_status"),
-        error=result.get("error"),
-    )
-    return dict(result)
+        try:
+            progress_callback = _build_progress_callback(task_id, topic)
+            run_pipeline = orchestrator.run_pipeline
+            if "progress_callback" in inspect.signature(run_pipeline).parameters:
+                result = await run_pipeline(topic, progress_callback=progress_callback)
+            else:
+                result = await run_pipeline(topic)
+            final_status = "failure" if result.get("error") else "success"
+            await _record_pipeline_task(
+                task_id,
+                topic,
+                final_status,
+                payload={
+                    "result": dict(result),
+                    "current_step": "completed",
+                    "ended_at": datetime.now(UTC).isoformat(),
+                },
+                error=str(result.get("error")) if result.get("error") else None,
+            )
+            logger.info(
+                "run_pipeline_task_completed",
+                topic=topic,
+                publish_status=result.get("publish_status"),
+                error=result.get("error"),
+            )
+            return dict(result)
+        except Exception as exc:
+            await _record_pipeline_task(
+                task_id,
+                topic,
+                "failure",
+                payload={
+                    "current_step": "failed",
+                    "ended_at": datetime.now(UTC).isoformat(),
+                },
+                error=str(exc),
+            )
+            logger.exception("run_pipeline_task_failed", topic=topic, error=str(exc))
+            raise
+
+    return asyncio.run(_run())
 
 
 def _current_task_id() -> str | None:

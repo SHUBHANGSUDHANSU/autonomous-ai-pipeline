@@ -247,4 +247,11 @@ def test_dockerfile_uses_multistage_non_root_runtime() -> None:
     assert "poetry check" in dockerfile
     assert "pip install --no-cache-dir -r requirements.txt" in dockerfile
     assert "USER appuser" in dockerfile
-    assert 'CMD ["uvicorn", "app.main:app"' in dockerfile
+    assert 'CMD ["/app/docker-entrypoint.sh"]' in dockerfile
+
+    entrypoint = (
+        Path(__file__).resolve().parents[1] / "docker-entrypoint.sh"
+    ).read_text()
+    assert "uvicorn app.main:app" in entrypoint
+    assert "celery -A app.tasks.celery_tasks.celery_app worker" in entrypoint
+    assert "celery -A app.tasks.celery_tasks.celery_app beat" in entrypoint
