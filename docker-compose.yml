@@ -1,0 +1,99 @@
+services:
+  api:
+    build: .
+    container_name: autonomous_ai_api
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+
+  worker:
+    build: .
+    container_name: autonomous_ai_worker
+    command: celery -A app.tasks.celery_tasks.celery_app worker --loglevel=INFO
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+
+  beat:
+    build: .
+    container_name: autonomous_ai_beat
+    command: celery -A app.tasks.celery_tasks.celery_app beat --loglevel=INFO --schedule=/tmp/celerybeat-schedule
+    env_file:
+      - .env
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - pipeline_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: autonomous_ai_redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pipeline_network
+
+  db:
+    image: postgres:15-alpine
+    container_name: autonomous_ai_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: pipeline_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d pipeline_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pipeline_network
+
+  flower:
+    build: .
+    container_name: autonomous_ai_flower
+    command: celery -A app.tasks.celery_tasks.celery_app flower --port=5555
+    env_file:
+      - .env
+    ports:
+      - "5555:5555"
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    networks:
+      - pipeline_network
+
+volumes:
+  postgres_data:
+
+networks:
+  pipeline_network:
+    driver: bridge

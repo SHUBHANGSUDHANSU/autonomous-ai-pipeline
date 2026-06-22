@@ -1,0 +1,317 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg-primary: #f7f8ff;
+  --bg-secondary: #eef1fb;
+  --bg-card: #ffffff;
+  --bg-hover: #eef0ff;
+  --border: #10122912;
+  --border-active: #10122924;
+  --text-primary: #111229;
+  --text-secondary: #555b7c;
+  --text-muted: #7d83a3;
+  --accent-primary: #6c63ff;
+  --accent-glow: #6c63ff24;
+  --accent-secondary: #00d4aa;
+  --accent-warning: #ff9f43;
+  --accent-danger: #ff6b6b;
+  --accent-success: #00d4aa;
+  --gradient-1: linear-gradient(135deg, #6c63ff, #00d4aa);
+  --gradient-2: linear-gradient(135deg, #ff6b6b, #ff9f43);
+  --sidebar-width: 280px;
+  --body-radial-purple: rgba(108, 99, 255, 0.12);
+  --body-radial-teal: rgba(0, 212, 170, 0.1);
+}
+
+html.dark {
+  color-scheme: dark;
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #111118;
+  --bg-card: #16161f;
+  --bg-hover: #1c1c28;
+  --border: #ffffff0f;
+  --border-active: #ffffff20;
+  --text-primary: #f0f0ff;
+  --text-secondary: #8888aa;
+  --text-muted: #555570;
+  --accent-glow: #6c63ff40;
+  --body-radial-purple: rgba(108, 99, 255, 0.08);
+  --body-radial-teal: rgba(0, 212, 170, 0.07);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: #050509;
+  transition: background-color 240ms ease, color 240ms ease;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  overflow-x: hidden;
+  background: #050509;
+  color: var(--text-primary);
+  font-family: "DM Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-rendering: geometricPrecision;
+  transition: background-color 240ms ease, color 240ms ease;
+}
+
+body,
+button,
+input,
+select,
+textarea,
+a,
+header,
+aside,
+section,
+article,
+div,
+span,
+p,
+h1,
+h2,
+h3 {
+  transition:
+    background-color 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease,
+    color 240ms ease,
+    fill 240ms ease,
+    stroke 240ms ease;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: rgba(108, 99, 255, 0.45);
+  color: white;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.video-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(108, 99, 255, 0.2), transparent 34%),
+    radial-gradient(circle at 80% 76%, rgba(0, 212, 170, 0.18), transparent 34%),
+    #050509;
+}
+
+.video-backdrop__media,
+.video-backdrop__ambient {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center center;
+}
+
+.video-backdrop__ambient {
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  opacity: 0.72;
+  filter: blur(34px) saturate(1.45) contrast(1.12) brightness(0.82);
+  transform: scale(1.28);
+}
+
+.video-backdrop__media {
+  inset: 0;
+  opacity: 0.74;
+  filter: saturate(1.18) contrast(1.08) brightness(0.9);
+  transform: scale(1.18);
+}
+
+.video-backdrop__veil {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 5, 9, 0.82) 0%, rgba(5, 5, 9, 0.54) 24%, rgba(5, 5, 9, 0.34) 58%, rgba(5, 5, 9, 0.66) 100%),
+    linear-gradient(180deg, rgba(5, 5, 9, 0.38) 0%, rgba(5, 5, 9, 0.18) 36%, rgba(5, 5, 9, 0.72) 100%);
+}
+
+.video-backdrop__vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.08) 48%, rgba(0, 0, 0, 0.5) 100%),
+    linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.14));
+}
+
+html:not(.dark) .video-backdrop__media {
+  opacity: 0.52;
+  filter: saturate(1) contrast(0.98) brightness(1.12);
+}
+
+html:not(.dark) .video-backdrop__ambient {
+  opacity: 0.5;
+  filter: blur(34px) saturate(1.2) contrast(1) brightness(1.08);
+}
+
+html:not(.dark) .video-backdrop__veil {
+  background:
+    linear-gradient(90deg, rgba(247, 248, 255, 0.84) 0%, rgba(247, 248, 255, 0.62) 24%, rgba(247, 248, 255, 0.42) 62%, rgba(247, 248, 255, 0.74) 100%),
+    linear-gradient(180deg, rgba(247, 248, 255, 0.42) 0%, rgba(247, 248, 255, 0.24) 36%, rgba(247, 248, 255, 0.76) 100%);
+}
+
+html:not(.dark) .video-backdrop__vignette {
+  background:
+    radial-gradient(circle at center, transparent 0%, rgba(255, 255, 255, 0.02) 48%, rgba(247, 248, 255, 0.42) 100%),
+    linear-gradient(180deg, transparent, rgba(247, 248, 255, 0.28));
+}
+
+.glass-panel {
+  border: 1px solid var(--border);
+  background: rgba(22, 22, 31, 0.64);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(22px);
+}
+
+.text-gradient {
+  background: var(--gradient-1);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.skeleton-shimmer::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.streaming-cursor {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+}
+
+.prose-body h1,
+.prose-body h2,
+.prose-body h3 {
+  margin: 1.6em 0 0.7em;
+  color: var(--text-primary);
+  font-family: "Bricolage Grotesque", "Cal Sans", "DM Sans", sans-serif;
+  line-height: 1.15;
+}
+
+.prose-body h2 {
+  font-size: 1.55rem;
+}
+
+.prose-body h3 {
+  font-size: 1.25rem;
+}
+
+.prose-body p {
+  margin: 0 0 1.1em;
+  color: var(--text-secondary);
+}
+
+.prose-body ul,
+.prose-body ol {
+  margin: 1.1em 0;
+  padding-left: 1.25rem;
+}
+
+.prose-body li {
+  margin: 0.45em 0;
+}
+
+.prose-body pre,
+.prose-body code {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.prose-body pre {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.32);
+  padding: 1rem;
+}
+
+@media (max-width: 767px) {
+  .video-backdrop__media {
+    opacity: 0.68;
+  }
+
+  .video-backdrop__ambient {
+    opacity: 0.7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video-backdrop__media {
+    display: none;
+  }
+
+  html,
+  body,
+  body *,
+  body *::before,
+  body *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
