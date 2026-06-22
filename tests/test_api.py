@@ -304,6 +304,23 @@ def test_celery_tasks_reuse_the_same_async_event_loop() -> None:
     assert first_loop == second_loop
 
 
+def test_pipeline_telemetry_removes_postgres_incompatible_null_bytes() -> None:
+    """Scraped binary text should be safe to persist in a PostgreSQL JSONB field."""
+
+    payload = {
+        "state": {
+            "raw_research": [
+                {"content": "SAP\x00Business AI", "nested": ("safe", "\x00value")}
+            ]
+        }
+    }
+
+    sanitized = celery_tasks._sanitize_json_value(payload)
+
+    assert sanitized["state"]["raw_research"][0]["content"] == "SAPBusiness AI"
+    assert sanitized["state"]["raw_research"][0]["nested"] == ["safe", "value"]
+
+
 def test_publish_content_task_marks_content_published(monkeypatch: pytest.MonkeyPatch) -> None:
     """Publish task should update content status."""
 

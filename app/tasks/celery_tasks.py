@@ -153,6 +153,23 @@ def _build_progress_callback(task_id: str | None, topic: str) -> Any:
     return _progress
 
 
+def _sanitize_json_value(value: Any) -> Any:
+    """Remove PostgreSQL-incompatible null characters from nested JSON values."""
+
+    if isinstance(value, str):
+        return value.replace("\x00", "")
+    if isinstance(value, dict):
+        return {
+            str(key).replace("\x00", ""): _sanitize_json_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_json_value(item) for item in value]
+    if isinstance(value, tuple):
+        return [_sanitize_json_value(item) for item in value]
+    return value
+
+
 async def _record_pipeline_task(
     celery_task_id: str | None,
     topic: str,
@@ -184,9 +201,10 @@ async def _record_pipeline_task(
             task.status = status
             task.error = error
             if payload:
+                safe_payload = _sanitize_json_value(payload)
                 merged_payload = dict(task.payload or {})
-                merged_payload.update(payload)
-                current_step = payload.get("current_step")
+                merged_payload.update(safe_payload)
+                current_step = safe_payload.get("current_step")
                 if current_step:
                     step_timestamps = dict(merged_payload.get("step_timestamps") or {})
                     step_timestamps.setdefault(str(current_step), datetime.now(UTC).isoformat())
