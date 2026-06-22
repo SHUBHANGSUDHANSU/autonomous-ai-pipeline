@@ -12,6 +12,8 @@ FROM python:3.11-slim AS builder
 
 ENV POETRY_VERSION=1.8.3 \
     POETRY_VIRTUALENVS_CREATE=false \
+    PIP_DEFAULT_TIMEOUT=180 \
+    PIP_RETRIES=10 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -45,9 +47,12 @@ RUN apt-get update \
 COPY --from=builder /usr/local /usr/local
 COPY app ./app
 COPY --from=frontend-builder /app/app/static ./app/static
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+
+RUN chmod +x ./docker-entrypoint.sh
 
 USER appuser
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/docker-entrypoint.sh"]
