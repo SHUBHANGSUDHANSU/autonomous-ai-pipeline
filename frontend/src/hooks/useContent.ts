@@ -1,7 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import client from "../api/client";
-import { mockContent } from "../api/mockData";
 import type { ApiContent, ContentItem, ContentListResponse, RegenerateContentRequest } from "../types";
 import { useToast } from "./useToast";
 
@@ -32,30 +30,16 @@ export function useContentList(status?: string) {
   return useQuery({
     queryKey: ["content", status || "all"],
     queryFn: async () => {
-      try {
-        const params = new URLSearchParams({ limit: "100", offset: "0" });
-        if (status && status !== "all") {
-          params.set("status", status);
-        }
-        const { data } = await client.get<ContentListResponse>(`/content?${params.toString()}`);
-        const normalized = data.items.map(toContentItem);
-        return {
-          total: data.total,
-          items: normalized,
-        };
-      } catch (error) {
-        if (axios.isAxiosError(error)) {
-          return {
-            total: mockContent.length,
-            items: status && status !== "all"
-              ? mockContent.filter((item) => item.status === status)
-              : mockContent,
-          };
-        }
-        throw error;
+      const params = new URLSearchParams({ limit: "100", offset: "0" });
+      if (status && status !== "all") {
+        params.set("status", status);
       }
+      const { data } = await client.get<ContentListResponse>(`/content?${params.toString()}`);
+      return {
+        total: data.total,
+        items: data.items.map(toContentItem),
+      };
     },
-    placeholderData: { total: mockContent.length, items: mockContent },
     staleTime: 15000,
   });
 }
@@ -65,17 +49,12 @@ export function useContentDetail(id?: string) {
     queryKey: ["content-detail", id],
     enabled: Boolean(id),
     queryFn: async () => {
-      if (!id?.startsWith("mock-")) {
-        const { data } = await client.get<ApiContent>(`/content/${id}`);
-        return toContentItem(data);
+      if (!id) {
+        throw new Error("Content id is required");
       }
-      const item = mockContent.find((entry) => entry.id === id);
-      if (!item) {
-        throw new Error("Content not found");
-      }
-      return item;
+      const { data } = await client.get<ApiContent>(`/content/${id}`);
+      return toContentItem(data);
     },
-    placeholderData: id ? mockContent.find((entry) => entry.id === id) : undefined,
   });
 }
 
@@ -85,9 +64,6 @@ export function useDeleteContent() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      if (id.startsWith("mock-")) {
-        return { content_id: id, status: "deleted" };
-      }
       const { data } = await client.delete(`/content/${id}`);
       return data;
     },
@@ -106,9 +82,6 @@ export function useRegenerateContent() {
 
   return useMutation({
     mutationFn: async ({ id, action }: RegenerateContentRequest) => {
-      if (id.startsWith("mock-")) {
-        throw new Error("AI regeneration requires a saved article from the database.");
-      }
       const { data } = await client.post<ApiContent>(`/content/${id}/regenerate`, { action });
       return toContentItem(data);
     },

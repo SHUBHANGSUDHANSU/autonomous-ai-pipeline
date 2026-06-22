@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { mockContent } from "../../api/mockData";
+import { useContentList } from "../../hooks/useContent";
 import { useTheme } from "../../hooks/useTheme";
 import { useToast } from "../../hooks/useToast";
 import { cn } from "../../lib/utils";
@@ -64,12 +64,13 @@ export function CommandPalette() {
   const { clearLogs, resetAgents, setActiveRun, setRunning } = usePipelineStore();
   const { setSearch, setStatus, setSortMode } = useContentStore();
   const { theme, nextTheme, cycleTheme } = useTheme();
+  const { data: contentData } = useContentList();
   const toast = useToast();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const commands = useMemo<CommandItem[]>(() => {
-    const latestArticle = [...mockContent].sort(
+    const latestArticle = [...(contentData?.items || [])].sort(
       (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
     )[0];
 
@@ -256,6 +257,7 @@ export function CommandPalette() {
   }, [
     clearLogs,
     closePalette,
+    contentData?.items,
     navigate,
     resetAgents,
     setActiveRun,

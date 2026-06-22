@@ -11,6 +11,17 @@ export function ActivityFeed({ items }: { items: ActivityItem[] }) {
         <h2 className="mt-1 font-display text-2xl font-bold text-[var(--text-primary)]">Agent Activity Feed</h2>
       </div>
       <div className="max-h-[430px] space-y-3 overflow-auto p-5">
+        {!items.length ? (
+          <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed border-[var(--border)] text-center">
+            <div>
+              <Clock3 className="mx-auto text-[var(--text-muted)]" size={28} />
+              <p className="mt-3 font-bold text-[var(--text-primary)]">No agent activity yet</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                Run a pipeline to populate this feed with real agent updates.
+              </p>
+            </div>
+          </div>
+        ) : null}
         {items.slice(0, 10).map((item, index) => (
           <motion.div
             key={item.id}

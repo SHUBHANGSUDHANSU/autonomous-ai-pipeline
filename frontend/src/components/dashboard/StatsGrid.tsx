@@ -1,5 +1,5 @@
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { ArrowDownRight, ArrowUpRight, BarChart3, FileText, Gauge, Send } from "lucide-react";
+import { BarChart3, FileText, Gauge, Send } from "lucide-react";
 import { useEffect } from "react";
 import { Card } from "../ui/Card";
 import { staggerContainer, staggerItem } from "../layout/PageWrapper";
@@ -11,7 +11,6 @@ interface Stat {
   value: number;
   suffix?: string;
   change: string;
-  positive: boolean;
 }
 
 export function StatsGrid({ stats }: { stats: Stat[] }) {
@@ -31,14 +30,7 @@ export function StatsGrid({ stats }: { stats: Stat[] }) {
                 <div className="grid h-11 w-11 place-items-center rounded-2xl bg-white/[0.06] text-[var(--accent-secondary)]">
                   <Icon size={20} />
                 </div>
-                <span
-                  className={`inline-flex items-center gap-1 text-xs font-bold ${
-                    stat.positive ? "text-[var(--accent-success)]" : "text-[var(--accent-danger)]"
-                  }`}
-                >
-                  {stat.positive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                  {stat.change}
-                </span>
+                <span className="text-xs font-bold text-[var(--accent-success)]">{stat.change}</span>
               </div>
               <AnimatedNumber value={stat.value} suffix={stat.suffix} />
               <p className="mt-1 text-sm text-[var(--text-secondary)]">{stat.label}</p>
