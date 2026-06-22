@@ -1,5 +1,6 @@
 """FastAPI route tests."""
 
+import asyncio
 import os
 import uuid
 from datetime import UTC, datetime
@@ -287,6 +288,20 @@ def test_run_pipeline_celery_task(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert result["topic"] == "agentic ai"
     assert result["publish_status"] == "scheduled"
+
+
+def test_celery_tasks_reuse_the_same_async_event_loop() -> None:
+    """Sequential Celery jobs should share the loop that owns async DB connections."""
+
+    async def current_loop_id() -> int:
+        """Return the active loop identity."""
+
+        return id(asyncio.get_running_loop())
+
+    first_loop = celery_tasks._run_async(current_loop_id())
+    second_loop = celery_tasks._run_async(current_loop_id())
+
+    assert first_loop == second_loop
 
 
 def test_publish_content_task_marks_content_published(monkeypatch: pytest.MonkeyPatch) -> None:

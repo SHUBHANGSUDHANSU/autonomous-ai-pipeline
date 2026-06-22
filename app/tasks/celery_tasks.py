@@ -3,16 +3,18 @@
 import asyncio
 import inspect
 import uuid
+from collections.abc import Coroutine
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, TypeVar
 
 from celery import Celery, current_task
+from celery.signals import worker_process_shutdown
 from redis.exceptions import RedisError
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import settings
-from app.db.session import get_session_context
+from app.db.session import engine, get_session_context
 from app.models.content import Content
 from app.models.pipeline_state import PipelineState
 from app.models.task import PipelineTask
@@ -40,6 +42,31 @@ celery_app.conf.update(
 )
 
 logger = get_logger("celery_tasks")
+ResultT = TypeVar("ResultT")
+_async_runner: asyncio.Runner | None = None
+
+
+def _run_async(coroutine: Coroutine[Any, Any, ResultT]) -> ResultT:
+    """Run async task code on a persistent event loop within each worker process."""
+
+    global _async_runner
+    if _async_runner is None:
+        _async_runner = asyncio.Runner()
+    return _async_runner.run(coroutine)
+
+
+@worker_process_shutdown.connect
+def _close_async_runner(**_: Any) -> None:
+    """Dispose async resources on their owning event loop before worker shutdown."""
+
+    global _async_runner
+    if _async_runner is None:
+        return
+    try:
+        _async_runner.run(engine.dispose())
+    finally:
+        _async_runner.close()
+        _async_runner = None
 
 
 @celery_app.task(name="app.tasks.celery_tasks.run_pipeline_task")
@@ -98,7 +125,7 @@ def run_pipeline_task(topic: str) -> dict[str, Any]:
             logger.exception("run_pipeline_task_failed", topic=topic, error=str(exc))
             raise
 
-    return asyncio.run(_run())
+    return _run_async(_run())
 
 
 def _current_task_id() -> str | None:
@@ -197,7 +224,7 @@ def publish_content_task(content_id: str) -> dict[str, str]:
             logger.error("publish_content_db_failed", content_id=content_id, error=str(exc))
             raise
 
-    return asyncio.run(_publish())
+    return _run_async(_publish())
 
 
 @celery_app.task(name="app.tasks.celery_tasks.scheduled_pipeline_beat")
@@ -218,4 +245,4 @@ def scheduled_pipeline_beat() -> dict[str, Any]:
         finally:
             await memory.close()
 
-    return asyncio.run(_check_topic_queue())
+    return _run_async(_check_topic_queue())
