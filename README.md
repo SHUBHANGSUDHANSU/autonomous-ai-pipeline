@@ -1,5 +1,13 @@
 # Autonomous Agentic AI Content Pipeline
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_Nexus_AI-00c9a7?style=for-the-badge)](https://api-production-b679.up.railway.app/app)
+
+## Live Demo
+
+Explore the deployed application: **[Nexus AI Pipeline](https://api-production-b679.up.railway.app/app)**
+
+API documentation: **[FastAPI Swagger UI](https://api-production-b679.up.railway.app/docs)**
+
 Autonomous Agentic AI Content Pipeline is a production-oriented Python system that researches topics from the web, synthesizes source material, drafts long-form articles, edits for quality and SEO, and schedules publication without human intervention after a run is triggered. It combines LangGraph state-machine orchestration with CrewAI role definitions, Groq LLM inference, Tavily web search, async PostgreSQL persistence, Redis-backed memory, and Celery scheduling.
 
 The project is designed to be resume-ready: it demonstrates agentic decision-making through a conditional quality retry loop, non-blocking FastAPI and SQLAlchemy async I/O, production task queues, structured JSON logging, Dockerized service orchestration, and observability through Flower.
